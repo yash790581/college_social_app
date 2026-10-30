@@ -1,0 +1,135 @@
+<%- include('partials/header') %>
+
+<main class="main-content app-home">
+  <section class="home-welcome container" aria-labelledby="homeTitle">
+    <div class="home-welcome-top">
+      <div class="home-brand-avatar" aria-hidden="true">🎮</div>
+      <div class="home-brand-copy">
+        <span class="home-eyebrow">YOUR CAMPUS GAME LOUNGE</span>
+        <h1 class="home-title" id="homeTitle"><%= brandName %></h1>
+      </div>
+      <span class="home-status-pill"><span class="status-dot"></span> Prototype</span>
+    </div>
+    <p class="hero-tagline"><%= tagline %></p>
+  </section>
+
+  <section class="campus-scope-section container" id="campus-selector" aria-labelledby="campusScopeTitle">
+    <div class="home-section-heading">
+      <div>
+        <span class="home-section-kicker">Choose your circle</span>
+        <h2 id="campusScopeTitle">Who do you want to play with?</h2>
+      </div>
+    </div>
+
+    <div class="campus-scope-grid" role="radiogroup" aria-label="Choose campus scope">
+      <% campusOptions.forEach(function(option) { %>
+        <button
+          class="mode-card campus-scope-card <%= option.isDefault ? 'active' : '' %>"
+          id="card-<%= option.id %>"
+          data-mode="<%= option.id %>"
+          type="button"
+          role="radio"
+          aria-checked="<%= option.isDefault ? 'true' : 'false' %>"
+        >
+          <span class="scope-card-icon" aria-hidden="true"><%= option.icon === 'campus' ? '🏫' : '🌎' %></span>
+          <span class="scope-card-content">
+            <span class="scope-card-title"><%= option.name %></span>
+            <span class="scope-card-description"><%= option.description %></span>
+            <span class="scope-card-note">
+              <% if (option.id === 'my-campus') { %>
+                Campus verification will be required when this feature is live.
+              <% } else { %>
+                Includes students from other colleges.
+              <% } %>
+            </span>
+          </span>
+          <span class="scope-radio" aria-hidden="true"><span></span></span>
+        </button>
+      <% }); %>
+    </div>
+
+    <div class="home-find-row">
+      <div>
+        <strong>Pick a mode and explore.</strong>
+        <span>Finding a match is only a prototype preview.</span>
+      </div>
+      <button id="findGameBtn" class="btn-find-game" type="button" aria-haspopup="dialog">
+        <span class="btn-primary-text">Find a game</span>
+        <span class="btn-prototype-flag">Preview</span>
+        <span class="btn-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="home-games-section container" id="games" aria-labelledby="gamesTitle">
+    <div class="home-section-heading games-heading">
+      <div>
+        <span class="home-section-kicker">Take a quick break</span>
+        <h2 id="gamesTitle">Games</h2>
+      </div>
+      <a href="/campus-impostor" class="game-room-link"><span aria-hidden="true">▣</span> Game Room</a>
+    </div>
+
+    <div class="recently-played-row">
+      <span class="recent-label">Recently played:</span>
+      <a href="/campus-impostor" class="recent-game-chip"><span aria-hidden="true">🕵️</span> Campus Impostor</a>
+      <a href="/campus-impostor" class="recent-game-chip"><span aria-hidden="true">🤐</span> Wordless Mode</a>
+    </div>
+
+    <a href="/campus-impostor" class="featured-game-card">
+      <span class="featured-game-art" aria-hidden="true"><span>🕵️</span><i>✦</i><b>?</b></span>
+      <span class="featured-game-copy">
+        <span class="featured-game-label">FEATURED • PROTOTYPE</span>
+        <strong>Campus Impostor</strong>
+        <span>Give clues, read the room, and find the impostor.</span>
+      </span>
+      <span class="featured-game-arrow" aria-hidden="true">→</span>
+    </a>
+
+    <div class="coming-games-grid" aria-label="More games coming soon">
+      <article class="coming-game-card game-card-lilac">
+        <span class="coming-game-art" aria-hidden="true">🧑‍🎨</span>
+        <span class="coming-game-title">Campus Doodle</span>
+        <span class="coming-game-status">Coming soon</span>
+      </article>
+      <article class="coming-game-card game-card-mint">
+        <span class="coming-game-art" aria-hidden="true">🧠</span>
+        <span class="coming-game-title">Quick Quiz</span>
+        <span class="coming-game-status">Coming soon</span>
+      </article>
+      <article class="coming-game-card game-card-peach">
+        <span class="coming-game-art" aria-hidden="true">🎭</span>
+        <span class="coming-game-title">Meme Match</span>
+        <span class="coming-game-status">Coming soon</span>
+      </article>
+      <article class="coming-game-card game-card-blue">
+        <span class="coming-game-art" aria-hidden="true">🎲</span>
+        <span class="coming-game-title">Study Break</span>
+        <span class="coming-game-status">Coming soon</span>
+      </article>
+    </div>
+  </section>
+</main>
+
+<!-- Prototype matchmaking dialog -->
+<div class="modal-backdrop" id="prototypeModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Prototype Preview</div>
+      <button class="modal-close-btn" id="modalCloseBtn" type="button" aria-label="Close dialog">&times;</button>
+    </div>
+    <div class="modal-body text-center">
+      <div class="modal-icon">🎯</div>
+      <h3 class="modal-title" id="modalTitle">Ready to find a game?</h3>
+      <p class="modal-mode-msg">Selected option: <strong id="selectedModeText">My campus</strong></p>
+      <div class="modal-status-box"><span class="status-indicator"></span><span><%= demoStatusText %></span></div>
+      <p class="modal-explanation" id="modalExplanation">This is a visual preview. Live matchmaking and campus verification are not available yet.</p>
+    </div>
+    <div class="modal-footer modal-footer-actions">
+      <button class="btn-modal-dismiss" id="modalDismissBtn" type="button">Got it</button>
+      <a href="/campus-impostor" class="btn-modal-impostor"><span>Explore Campus Impostor</span><span class="btn-arrow">→</span></a>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

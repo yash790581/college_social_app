@@ -1,0 +1,244 @@
+<%- include('partials/header') %>
+
+<main class="main-content impostor-flow-page">
+  <!-- Prototype Banner Alert -->
+  <section class="banner-section">
+    <div class="container">
+      <div class="prototype-banner" role="alert">
+        <div class="banner-icon">⚡</div>
+        <div class="banner-content">
+          <strong class="banner-title"><%= prototypeBadge %> • Campus Game</strong>
+          <p class="banner-desc"><%= prototypeNotice %></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Flow Header / Breadcrumbs -->
+  <section class="flow-header-section">
+    <div class="container">
+      <nav class="flow-breadcrumbs" aria-label="Breadcrumb">
+        <a href="/" class="crumb-link">
+          <span class="crumb-arrow">←</span>
+          <span>Back to SweetPlay Home</span>
+        </a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">Campus Impostor Hub</span>
+      </nav>
+
+      <div class="flow-hero text-center">
+        <div class="hero-badge">
+          <span class="badge-icon">🕵️</span>
+          <span>Play with your group</span>
+        </div>
+        <h1 class="flow-title">
+          <span class="gradient-text"><%= gameTitle %></span>
+        </h1>
+        <p class="flow-subtitle">
+          <%= gameSubtitle %>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mode Selector Grid -->
+  <section class="modes-grid-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Choose a mode</span>
+        <h2 class="section-title">Who's joining your game?</h2>
+        <p class="section-subtitle">
+          Pick a game style, then create a room or join a classmate.
+        </p>
+      </div>
+
+      <div class="impostor-modes-grid">
+        <% modes.forEach(function(mode) { %>
+          <div class="mode-selection-card" id="mode-card-<%= mode.id %>">
+            <div class="mode-card-glow"></div>
+            
+            <div class="mode-card-header">
+              <div class="mode-icon-circle">
+                <span class="mode-card-emoji"><%= mode.icon %></span>
+              </div>
+              <div class="mode-meta-tags">
+                <span class="badge-pill badge-outline"><%= mode.tag %></span>
+                <span class="badge-pill badge-primary"><%= mode.badge %></span>
+              </div>
+            </div>
+
+            <h3 class="mode-card-title"><%= mode.name %></h3>
+            <p class="mode-card-summary"><%= mode.summary %></p>
+            <p class="mode-card-description"><%= mode.description %></p>
+
+            <div class="mode-card-footer">
+              <span class="player-count-pill"><%= mode.playersLabel %></span>
+              <button 
+                type="button" 
+                class="btn-enter-mode btn-open-create-modal" 
+                data-mode-id="<%= mode.modeId %>"
+                data-mode-name="<%= mode.name %>"
+                id="btn-mode-<%= mode.id %>"
+              >
+                <span>Choose Mode</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Quick Room Actions: Create Room vs Join with Code -->
+      <div class="room-actions-bar">
+        <div class="room-action-item">
+          <div class="action-icon">🏠</div>
+          <div class="action-text">
+            <h4><%= roomActions.createLabel %></h4>
+            <p><%= roomActions.createDesc %></p>
+          </div>
+          <button type="button" class="btn-room-action btn-create-room" id="btnOpenCreateRoomModal">
+            <span>Create Room</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+
+        <div class="room-action-item">
+          <div class="action-icon">🔑</div>
+          <div class="action-text">
+            <h4><%= roomActions.searchLabel %></h4>
+            <p><%= roomActions.searchDesc %></p>
+          </div>
+          <button type="button" class="btn-room-action btn-search-room" id="btnOpenJoinRoomModal">
+            <span>Join with Code</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Prototype Technical Notice -->
+      <div class="flow-footer-notice text-center">
+        <p class="disclaimer-note">
+          Rooms are temporary and reset when the server restarts.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Create Room Modal Dialog -->
+<div class="modal-backdrop" id="createRoomModal" role="dialog" aria-modal="true" aria-labelledby="createRoomTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Create Real-Time Room</div>
+      <button class="modal-close-btn" id="createRoomCloseBtn" aria-label="Close dialog">&times;</button>
+    </div>
+    
+    <form id="createRoomForm" class="modal-body text-left">
+      <div class="modal-icon text-center">🏠</div>
+      <h3 class="modal-title text-center" id="createRoomTitle">Host a Quad Lobby</h3>
+      <p class="modal-mode-msg text-center">
+        You will become the room creator (Host). Requires 3–6 players to play.
+      </p>
+
+      <div class="form-group-wrap">
+        <label for="createNickname" class="form-label">Your Nickname *</label>
+        <input 
+          type="text" 
+          id="createNickname" 
+          class="form-input-text" 
+          placeholder="e.g. Alex, Sam, CampusGamer" 
+          maxlength="20" 
+          required 
+          autocomplete="off"
+        />
+        <small class="form-hint">Displayed to other students in the quad seats.</small>
+      </div>
+
+      <div class="form-group-wrap">
+        <label for="createModeSelect" class="form-label">Game Mode *</label>
+        <select id="createModeSelect" class="form-select-box">
+          <option value="campus-impostor">Campus Impostor (Classic)</option>
+          <option value="wordless-impostor">Wordless Impostor (No Word Mode)</option>
+        </select>
+      </div>
+
+      <div class="form-group-wrap">
+        <label for="createCustomCode" class="form-label">Room Code (Optional)</label>
+        <input 
+          type="text" 
+          id="createCustomCode" 
+          class="form-input-text" 
+          placeholder="Leave blank to auto-generate (e.g. QUAD-104)" 
+          maxlength="12" 
+          autocomplete="off"
+        />
+        <small class="form-hint">Must be alphanumeric. Example: <code>QUAD-104</code> or <code>DORM-42</code></small>
+      </div>
+
+      <div class="modal-footer modal-footer-actions">
+        <button class="btn-modal-dismiss" id="createRoomDismissBtn" type="button">Cancel</button>
+        <button type="submit" class="btn-modal-impostor" id="btnSubmitCreateRoom">
+          <span>Create & Enter Lobby</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Join Room Modal Dialog -->
+<div class="modal-backdrop" id="joinRoomModal" role="dialog" aria-modal="true" aria-labelledby="joinRoomTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Join Real-Time Room</div>
+      <button class="modal-close-btn" id="joinRoomCloseBtn" aria-label="Close dialog">&times;</button>
+    </div>
+    
+    <form id="joinRoomForm" class="modal-body text-left">
+      <div class="modal-icon text-center">🔑</div>
+      <h3 class="modal-title text-center" id="joinRoomTitle">Enter Campus Room Code</h3>
+      <p class="modal-mode-msg text-center">
+        Join a friend or classmate's active 3–6 player lobby.
+      </p>
+
+      <div class="form-group-wrap">
+        <label for="joinRoomCode" class="form-label">Room Code *</label>
+        <input 
+          type="text" 
+          id="joinRoomCode" 
+          class="form-input-text" 
+          placeholder="e.g. QUAD-104" 
+          maxlength="16" 
+          required 
+          autocomplete="off"
+          style="text-transform: uppercase; font-family: monospace; font-weight: 700;"
+        />
+        <small class="form-hint">Ask your campus host for their 6-digit code or link.</small>
+      </div>
+
+      <div class="form-group-wrap">
+        <label for="joinNickname" class="form-label">Your Nickname *</label>
+        <input 
+          type="text" 
+          id="joinNickname" 
+          class="form-input-text" 
+          placeholder="e.g. Jordan, Maya, Casey" 
+          maxlength="20" 
+          required 
+          autocomplete="off"
+        />
+        <small class="form-hint">How classmates will see you at the table.</small>
+      </div>
+
+      <div class="modal-footer modal-footer-actions">
+        <button class="btn-modal-dismiss" id="joinRoomDismissBtn" type="button">Cancel</button>
+        <button type="submit" class="btn-modal-impostor" id="btnSubmitJoinRoom">
+          <span>Join Lobby</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

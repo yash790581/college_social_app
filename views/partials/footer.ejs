@@ -1,0 +1,54 @@
+  <!-- App-style bottom navigation -->
+  <nav class="app-bottom-nav" aria-label="Main navigation">
+    <a href="/" class="bottom-nav-item <%= typeof activeNav !== 'undefined' && activeNav === 'play' ? 'is-active' : '' %>" <%= typeof activeNav !== 'undefined' && activeNav === 'play' ? 'aria-current="page"' : '' %>>
+      <span class="bottom-nav-icon" aria-hidden="true">🎮</span><span>Play</span>
+    </a>
+    <a href="/campus-impostor" class="bottom-nav-item <%= typeof activeNav !== 'undefined' && activeNav === 'games' ? 'is-active' : '' %>" <%= typeof activeNav !== 'undefined' && activeNav === 'games' ? 'aria-current="page"' : '' %>>
+      <span class="bottom-nav-icon" aria-hidden="true">🕵️</span><span>Games</span>
+    </a>
+    <a href="/voice-rooms" class="bottom-nav-item <%= typeof activeNav !== 'undefined' && activeNav === 'rooms' ? 'is-active' : '' %>" <%= typeof activeNav !== 'undefined' && activeNav === 'rooms' ? 'aria-current="page"' : '' %>>
+      <span class="bottom-nav-icon" aria-hidden="true">🎙️</span><span>Rooms</span>
+    </a>
+    <button type="button" class="bottom-nav-item" disabled title="Direct messages are not part of this prototype">
+      <span class="bottom-nav-icon" aria-hidden="true">💬</span><span>Chats</span>
+    </button>
+    <button type="button" class="bottom-nav-item" disabled title="Profiles are coming later">
+      <span class="bottom-nav-icon" aria-hidden="true">👤</span><span>Me</span>
+    </button>
+  </nav>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="brand-logo footer-logo">
+          <span class="logo-icon">🎮</span>
+          <span class="logo-text"><%= brandName %></span>
+        </div>
+        <p class="footer-tagline"><%= typeof tagline !== 'undefined' ? tagline : 'Play with your campus. Meet players beyond it when you choose.' %></p>
+      </div>
+
+      <div class="footer-disclaimer">
+        <div class="disclaimer-badge">Prototype Phase</div>
+        <p class="disclaimer-text">
+          SweetPlay is currently an active UI and concept prototype. Student accounts, campus authentication, live matchmaking, and gameplay engines will be deployed in subsequent development phases.
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container footer-bottom-inner">
+        <p>&copy; <%= new Date().getFullYear() %> <%= brandName %>. All rights reserved. Designed for college gamers.</p>
+        <div class="footer-meta">
+          <span>Prototype v0.1</span>
+          <span>•</span>
+          <span>Node.js + Express + EJS</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Client-side Scripts -->
+  <script src="/js/room-client.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>

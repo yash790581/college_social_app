@@ -1,0 +1,423 @@
+<%- include('partials/header') %>
+
+<main class="main-content lobby-flow-page" id="lobbyMainContainer" data-room-code="<%= roomCode %>" data-selected-mode="<%= selectedMode %>" data-mode-id="<%= modeId %>">
+  <!-- Prototype Banner Alert -->
+  <section class="banner-section">
+    <div class="container">
+      <div class="prototype-banner" role="alert">
+        <div class="banner-icon">⚡</div>
+        <div class="banner-content">
+          <strong class="banner-title"><%= prototypeBadge %> • Room Lobby</strong>
+          <p class="banner-desc"><%= prototypeNotice %></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lobby Navigation & Room Meta Header -->
+  <section class="lobby-meta-section">
+    <div class="container">
+      <div class="lobby-header-bar">
+        <div class="lobby-nav-back">
+          <a href="/campus-impostor" class="btn-back-nav" id="btnBackToModes">
+            <span class="btn-arrow">←</span>
+            <span>Modes</span>
+          </a>
+        </div>
+
+        <div class="lobby-room-info text-center">
+          <div class="room-code-tag-wrap">
+            <span class="room-code-tag" id="displayRoomCode"><%= roomCode %></span>
+            <button type="button" class="btn-copy-code" id="btnCopyRoomCode" title="Copy Room Code to share with peers">
+              <span class="copy-icon">📋</span>
+              <span class="copy-label">Copy Code</span>
+            </button>
+            <button type="button" class="btn-copy-code" id="btnCopyRoomLink" title="Copy Full Room Link">
+              <span class="copy-icon">🔗</span>
+              <span class="copy-label">Copy Link</span>
+            </button>
+          </div>
+
+          <h1 class="room-display-name" id="roomDisplayName"><%= roomName %></h1>
+          
+          <div class="room-badges-row">
+            <span class="badge-pill badge-primary" id="lobbyModeBadge"><%= selectedMode %></span>
+            <span class="badge-pill badge-players" id="connectedCountBadge">1/6 Players</span>
+            <span class="badge-pill badge-timer" id="readyCountBadge">0/1 Ready</span>
+            <span class="badge-pill badge-outline" id="connectionStatusBadge">🟢 Connected</span>
+          </div>
+        </div>
+
+        <div class="lobby-header-actions">
+          <button type="button" class="btn-header-help" id="btnRulesHelp" aria-label="Open game rules">
+            <span class="help-icon">❓</span>
+            <span class="help-text">Rules</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Real-Time Waiting Lobby Area -->
+  <section class="lobby-stage-section">
+    <div class="container">
+      <div class="lobby-stage-card">
+        <div class="stage-ambient-glow"></div>
+
+        <!-- "Lobby Ready" State Banner (Shown when host starts) -->
+        <div class="lobby-started-alert text-center" id="lobbyStartedBanner" hidden>
+          <div class="started-alert-icon">🎉</div>
+          <div class="started-alert-content">
+            <h2 class="started-alert-title">Lobby Ready!</h2>
+            <p class="started-alert-text" id="lobbyStartedMessage">
+              All 3+ players are ready and the host has started the lobby. The room is locked in ready state.
+            </p>
+            <p class="started-alert-subtext">
+              (Front-end lobby milestone reached. Game round clue-giving, voting, and deduction logic will be implemented in the next phase.)
+            </p>
+            <div class="started-alert-actions" id="hostResetArea" hidden>
+              <button type="button" class="btn-reset-lobby" id="btnResetLobby">
+                <span>Reopen Waiting Lobby</span>
+                <span class="btn-icon">🔄</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Room Instructions Disclaimer -->
+        <div class="lobby-demo-disclaimer text-center">
+          <span class="demo-bullet">👥</span>
+          <span>Share code <code id="noticeRoomCode"><%= roomCode %></code> with your group. At least three players need to be ready before the host can start.</span>
+        </div>
+
+        <!-- 6-Seat Real-Time Grid -->
+        <div class="seats-grid-container" id="realtimeSeatsGrid" role="region" aria-label="Lobby Player Seats">
+          <!-- Dynamically populated via Socket.IO client, pre-rendered with 6 seat containers -->
+          <% for (let seatNum = 1; seatNum <= 6; seatNum++) { %>
+            <div 
+              class="seat-card empty-seat" 
+              id="seat-slot-<%= seatNum %>" 
+              data-seat="<%= seatNum %>"
+            >
+              <div class="seat-top-bar">
+                <span class="seat-number-pill">Seat <%= seatNum %></span>
+                <span class="ready-indicator-badge status-empty" id="seat-status-<%= seatNum %>">
+                  Empty
+                </span>
+              </div>
+
+              <div class="seat-avatar-wrap">
+                <div class="avatar-ring avatar-empty">
+                  <span class="avatar-emoji">👤</span>
+                </div>
+              </div>
+
+              <div class="seat-details text-center">
+                <h3 class="seat-player-name" id="seat-name-<%= seatNum %>">Waiting...</h3>
+                <span class="seat-player-tag" id="seat-tag-<%= seatNum %>">Open Seat</span>
+                <div class="seat-voice-state-wrap" id="seat-voice-wrap-<%= seatNum %>"></div>
+              </div>
+
+              <div class="seat-status-footer text-center">
+                <span class="seat-status-label" id="seat-label-<%= seatNum %>">Waiting for classmate</span>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- WebRTC Audio Controls Bar Dock                                   -->
+        <!-- ================================================================= -->
+        <div class="room-voice-dock" id="roomVoiceDock">
+          <div class="voice-dock-header">
+            <div class="voice-dock-title-wrap">
+              <div class="voice-dock-icon">🎙️</div>
+              <div>
+                <h3 class="voice-dock-title">Room Audio Channel</h3>
+                <p class="voice-dock-sub">Audio-only WebRTC mesh. Joins muted by default.</p>
+              </div>
+            </div>
+
+            <span class="badge-voice-status status-idle" id="voiceStatusBadge">
+              Voice: Idle
+            </span>
+          </div>
+
+          <div class="voice-dock-controls">
+            <!-- Idle / Not in voice: Join Voice action -->
+            <button type="button" class="btn-join-voice" id="btnJoinVoice">
+              <span class="btn-icon">🎙️</span>
+              <span>Join Voice Channel</span>
+            </button>
+
+            <!-- Active Voice Controls (hidden until joined voice) -->
+            <div class="voice-actions-group" id="activeVoiceControls" hidden>
+              <!-- Mic Toggle (Muted by default) -->
+              <button type="button" class="btn-voice-ctrl btn-mic-muted" id="btnToggleMic">
+                <span class="ctrl-icon">🔇</span>
+                <span>Turn on mic</span>
+              </button>
+
+              <!-- Speaker Toggle (Deafen) -->
+              <button type="button" class="btn-voice-ctrl btn-speaker-active" id="btnToggleSpeaker">
+                <span class="ctrl-icon">🔊</span>
+                <span>Speaker</span>
+              </button>
+
+              <!-- Leave Voice -->
+              <button type="button" class="btn-voice-ctrl btn-leave-voice" id="btnLeaveVoice">
+                <span class="ctrl-icon">📞</span>
+                <span>Leave Voice</span>
+              </button>
+            </div>
+
+            <div class="voice-dock-meta">
+              <span class="voice-meta-text" id="voiceStatusText" style="font-size: 0.76rem; color: #94a3b8;">
+                Click "Join Voice Channel" to enable audio
+              </span>
+            </div>
+          </div>
+
+          <!-- Helpful status/error notice box -->
+          <div class="voice-notice-box notice-info" id="voiceNoticeBox" hidden>
+            <span class="notice-icon">ℹ️</span>
+            <span class="notice-text" id="voiceNoticeText"></span>
+          </div>
+        </div>
+
+        <!-- Center Action Controls (Get Ready Toggle & Host Start Button) -->
+        <div class="lobby-action-controls text-center" id="lobbyControlsBox">
+          <div class="ready-toggle-wrapper">
+            <button 
+              type="button" 
+              class="btn-get-ready" 
+              id="btnToggleReady"
+              aria-pressed="false"
+              data-ready="false"
+            >
+              <span class="btn-ready-icon" id="readyBtnIcon">⚡</span>
+              <span class="btn-ready-text" id="readyBtnText">Get Ready</span>
+            </button>
+            <p class="ready-action-hint" id="readyActionHint">
+              Click to toggle your ready status. Minimum 3 ready players required to start.
+            </p>
+          </div>
+
+          <!-- Host-Only Start Game Action Container -->
+          <div class="host-controls-wrapper" id="hostControlsWrapper" hidden>
+            <button 
+              type="button" 
+              class="btn-host-start disabled" 
+              id="btnHostStart"
+              disabled
+            >
+              <span class="btn-start-icon">🚀</span>
+              <span class="btn-start-text" id="hostStartBtnText">Start Game (Need 3+ Ready)</span>
+            </button>
+            <p class="host-start-hint" id="hostStartHint">
+              Only the host can start the match when at least 3 players are ready.
+            </p>
+          </div>
+
+          <!-- Non-Host Status Message -->
+          <div class="non-host-status-wrapper" id="nonHostStatusWrapper">
+            <p class="non-host-wait-text" id="nonHostWaitText">
+              Waiting for host to start once 3+ players are ready.
+            </p>
+          </div>
+
+          <div class="lobby-secondary-buttons">
+            <button type="button" class="btn-lobby-secondary btn-invite-demo" id="btnShareInvite">
+              <span class="btn-icon">📋</span>
+              <span>Copy Invite Link</span>
+            </button>
+
+            <a href="/campus-impostor" class="btn-lobby-secondary btn-leave-lobby" id="btnLeaveLobby">
+              <span class="btn-icon">🚪</span>
+              <span>Leave Room</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- Shared Real-Time Group Chat Component                             -->
+        <!-- ================================================================= -->
+        <div class="room-chat-panel" id="roomChatPanel">
+          <div class="chat-panel-header">
+            <div class="chat-header-title-wrap">
+              <span class="chat-header-icon">💬</span>
+              <h3 class="chat-header-title">Quad Group Chat</h3>
+              <span class="chat-header-pill">Temporary • Room Only</span>
+            </div>
+            <span class="badge-pill badge-outline" style="font-size: 0.65rem;">Max 500 chars</span>
+          </div>
+
+          <!-- Chat Error Alert (e.g. rate limit) -->
+          <div class="chat-error-alert" id="chatErrorAlert" hidden>
+            <span>⚠️</span>
+            <span id="chatErrorText">Rate limit reached. Please wait a moment.</span>
+          </div>
+
+          <!-- Messages Container (Rendered with textContent) -->
+          <div class="chat-messages-list" id="chatMessagesList" role="log" aria-live="polite">
+            <div class="chat-empty-hint">
+              <span>👋 No messages yet. Say hello to your group in this lobby!</span>
+            </div>
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="chat-input-wrapper">
+            <form class="chat-input-form" id="chatInputForm">
+              <input 
+                type="text" 
+                class="chat-text-input" 
+                id="chatTextInput" 
+                placeholder="Type a message to the room..." 
+                maxlength="500" 
+                autocomplete="off"
+              />
+              <button type="submit" class="btn-send-chat" id="btnSendChatMessage">
+                <span>Send</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </form>
+            <div class="chat-input-footer">
+              <span>Press Enter to send. Rate limited to prevent spam.</span>
+              <span class="chat-char-counter" id="chatCharCounter">0/500</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Join Room Nickname Prompt Modal (Shown if user opened room URL directly without nickname) -->
+<div class="modal-backdrop" id="nicknameModal" role="dialog" aria-modal="true" aria-labelledby="nicknameModalTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Take Your Seat</div>
+    </div>
+    
+    <form id="nicknameForm" class="modal-body text-left">
+      <div class="modal-icon text-center">🎓</div>
+      <h3 class="modal-title text-center" id="nicknameModalTitle">Enter Campus Nickname</h3>
+      <p class="modal-mode-msg text-center">
+        Joining room <strong><span id="promptRoomCode"><%= roomCode %></span></strong>. Enter a name to join the quad table.
+      </p>
+
+      <div class="form-group-wrap">
+        <label for="promptNicknameInput" class="form-label">Your Nickname *</label>
+        <input 
+          type="text" 
+          id="promptNicknameInput" 
+          class="form-input-text" 
+          placeholder="e.g. Alex, Sam, Jordan" 
+          maxlength="20" 
+          required 
+          autocomplete="off"
+        />
+        <small class="form-hint">Displayed to other students at the quad table.</small>
+      </div>
+
+      <div class="modal-footer modal-footer-actions">
+        <a href="/campus-impostor" class="btn-modal-dismiss">Back to Modes</a>
+        <button type="submit" class="btn-modal-impostor" id="btnSubmitPromptNickname">
+          <span>Enter Room</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Room Error Modal Dialog -->
+<div class="modal-backdrop" id="roomErrorModal" role="dialog" aria-modal="true" aria-labelledby="roomErrorTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Room Notice</div>
+    </div>
+    
+    <div class="modal-body text-center">
+      <div class="modal-icon">⚠️</div>
+      <h3 class="modal-title" id="roomErrorTitle">Unable to Join Room</h3>
+      <p class="modal-mode-msg" id="roomErrorMessage">
+        The room could not be joined.
+      </p>
+      <div class="modal-status-box">
+        <span class="status-indicator"></span>
+        <span id="roomErrorDetail">Check code or create a new room</span>
+      </div>
+      <p class="modal-explanation">
+        Rooms are stored in server memory and reset when the server restarts. If this code was from a prior session, please host a new room.
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <a href="/campus-impostor" class="btn-modal-impostor">
+        <span>Back to Mode Selector</span>
+        <span class="btn-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Game Rules Modal Dialog -->
+<div class="modal-backdrop" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Game Overview</div>
+      <button class="modal-close-btn" id="rulesModalCloseBtn" aria-label="Close rules dialog">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="modal-icon text-center">📜</div>
+      <h3 class="modal-title text-center" id="rulesModalTitle">How Campus Impostor Works</h3>
+      <p class="modal-mode-msg text-center">
+        Campus-tailored social deduction rules
+      </p>
+
+      <div class="rules-list">
+        <div class="rule-item">
+          <span class="rule-num">1</span>
+          <div class="rule-desc">
+            <strong>Gather your group:</strong> 3–6 players can join. The host can start when at least three players are ready.
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-num">2</span>
+          <div class="rule-desc">
+            <strong>Private roles:</strong> Each player receives a private role card. Keep your role to yourself.
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-num">3</span>
+          <div class="rule-desc">
+            <strong>Share clues:</strong> Take turns giving short clues without revealing too much.
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-num">4</span>
+          <div class="rule-desc">
+            <strong>Vote Out the Impostor:</strong> Everyone discusses and votes out who doesn't belong!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-dismiss" id="rulesModalDismissBtn" type="button">Got It</button>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Toast Alert -->
+<div class="prototype-toast" id="prototypeToast" role="status" aria-live="polite" hidden>
+  <span class="toast-icon" id="toastIcon">ℹ️</span>
+  <span class="toast-message" id="toastMessage">Demo notification</span>
+</div>
+
+<!-- Include Socket.IO Client Library -->
+<script src="/socket.io/socket.io.js"></script>
+
+<%- include('partials/footer') %>

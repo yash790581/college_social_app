@@ -1,0 +1,312 @@
+<%- include('partials/header') %>
+
+<main class="main-content lobby-flow-page voice-room-stage-page" id="voiceRoomMainContainer" data-room-code="<%= roomCode %>" data-room-type="voice">
+  <!-- Prototype Banner Alert -->
+  <section class="banner-section">
+    <div class="container">
+      <div class="prototype-banner" role="alert">
+        <div class="banner-icon">🎙️</div>
+        <div class="banner-content">
+          <strong class="banner-title"><%= prototypeBadge %> • Campus Voice Lounge</strong>
+          <p class="banner-desc"><%= prototypeNotice %></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Room Meta Header -->
+  <section class="lobby-meta-section">
+    <div class="container">
+      <div class="lobby-header-bar">
+        <div class="lobby-nav-back">
+          <a href="/voice-rooms" class="btn-back-nav" id="btnBackToLounges">
+            <span class="btn-arrow">←</span>
+            <span>Lounges</span>
+          </a>
+        </div>
+
+        <div class="lobby-room-info text-center">
+          <div class="room-code-tag-wrap">
+            <span class="room-code-tag" id="displayRoomCode"><%= roomCode %></span>
+            <button type="button" class="btn-copy-code" id="btnCopyRoomCode" title="Copy Room Code">
+              <span class="copy-icon">📋</span>
+              <span class="copy-label">Copy Code</span>
+            </button>
+            <button type="button" class="btn-copy-code" id="btnCopyRoomLink" title="Copy Full Room Link">
+              <span class="copy-icon">🔗</span>
+              <span class="copy-label">Copy Link</span>
+            </button>
+          </div>
+
+          <h1 class="room-display-name" id="roomDisplayName"><%= roomName %></h1>
+
+          <div class="room-badges-row">
+            <span class="badge-pill badge-primary">Voice Lounge</span>
+            <span class="badge-pill badge-players" id="connectedCountBadge">1/6 Seated</span>
+            <span class="badge-pill badge-outline" id="connectionStatusBadge">🟢 Connected</span>
+          </div>
+        </div>
+
+        <div class="lobby-header-actions">
+          <span class="badge-pill badge-primary" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.5); color: #34d399;">
+            🎙️ Max 6 Audio
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive 6-Seat Quad & Audio Stage -->
+  <section class="lobby-stage-section">
+    <div class="container">
+      <div class="lobby-stage-card">
+        <div class="stage-ambient-glow"></div>
+
+        <!-- Room Instructions Disclaimer -->
+        <div class="lobby-demo-disclaimer text-center">
+          <span class="demo-bullet">👥</span>
+          <span>Share code <code id="noticeRoomCode"><%= roomCode %></code> with classmates. Click <strong>"Join Voice"</strong> to connect your microphone (joins muted by default).</span>
+        </div>
+
+        <!-- 6-Seat Real-Time Quad Grid -->
+        <div class="seats-grid-container" id="realtimeSeatsGrid" role="region" aria-label="Lobby Player Seats">
+          <% for (let seatNum = 1; seatNum <= 6; seatNum++) { %>
+            <div 
+              class="seat-card empty-seat" 
+              id="seat-slot-<%= seatNum %>" 
+              data-seat="<%= seatNum %>"
+            >
+              <div class="seat-top-bar">
+                <span class="seat-number-pill">Seat <%= seatNum %></span>
+                <span class="ready-indicator-badge status-empty" id="seat-status-<%= seatNum %>">
+                  Empty
+                </span>
+              </div>
+
+              <div class="seat-avatar-wrap">
+                <div class="avatar-ring avatar-empty">
+                  <span class="avatar-emoji">👤</span>
+                </div>
+              </div>
+
+              <div class="seat-details text-center">
+                <h3 class="seat-player-name" id="seat-name-<%= seatNum %>">Waiting...</h3>
+                <span class="seat-player-tag" id="seat-tag-<%= seatNum %>">Open Seat</span>
+                <div class="seat-voice-state-wrap" id="seat-voice-wrap-<%= seatNum %>"></div>
+              </div>
+
+              <div class="seat-status-footer text-center">
+                <span class="seat-status-label" id="seat-label-<%= seatNum %>">Open for classmate</span>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- WebRTC Audio Controls Bar Dock                                   -->
+        <!-- ================================================================= -->
+        <div class="room-voice-dock" id="roomVoiceDock">
+          <div class="voice-dock-header">
+            <div class="voice-dock-title-wrap">
+              <div class="voice-dock-icon">🎙️</div>
+              <div>
+                <h3 class="voice-dock-title">Room Audio Channel</h3>
+                <p class="voice-dock-sub">Audio-only WebRTC mesh. Joins muted by default.</p>
+              </div>
+            </div>
+
+            <span class="badge-voice-status status-idle" id="voiceStatusBadge">
+              Voice: Idle
+            </span>
+          </div>
+
+          <div class="voice-dock-controls">
+            <!-- Idle / Not in voice: Join Voice action -->
+            <button type="button" class="btn-join-voice" id="btnJoinVoice">
+              <span class="btn-icon">🎙️</span>
+              <span>Join Voice Channel</span>
+            </button>
+
+            <!-- Active Voice Controls (hidden until joined voice) -->
+            <div class="voice-actions-group" id="activeVoiceControls" hidden>
+              <!-- Mic Toggle (Muted by default) -->
+              <button type="button" class="btn-voice-ctrl btn-mic-muted" id="btnToggleMic">
+                <span class="ctrl-icon">🔇</span>
+                <span>Turn on mic</span>
+              </button>
+
+              <!-- Speaker Toggle (Deafen) -->
+              <button type="button" class="btn-voice-ctrl btn-speaker-active" id="btnToggleSpeaker">
+                <span class="ctrl-icon">🔊</span>
+                <span>Speaker</span>
+              </button>
+
+              <!-- Leave Voice -->
+              <button type="button" class="btn-voice-ctrl btn-leave-voice" id="btnLeaveVoice">
+                <span class="ctrl-icon">📞</span>
+                <span>Leave Voice</span>
+              </button>
+            </div>
+
+            <div class="voice-dock-meta">
+              <span class="voice-meta-text" id="voiceStatusText" style="font-size: 0.76rem; color: #94a3b8;">
+                Click "Join Voice Channel" to enable audio
+              </span>
+            </div>
+          </div>
+
+          <!-- Helpful status/error notice box -->
+          <div class="voice-notice-box notice-info" id="voiceNoticeBox" hidden>
+            <span class="notice-icon">ℹ️</span>
+            <span class="notice-text" id="voiceNoticeText"></span>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- Shared Real-Time Group Chat Component                             -->
+        <!-- ================================================================= -->
+        <div class="room-chat-panel" id="roomChatPanel">
+          <div class="chat-panel-header">
+            <div class="chat-header-title-wrap">
+              <span class="chat-header-icon">💬</span>
+              <h3 class="chat-header-title">Lounge Group Chat</h3>
+              <span class="chat-header-pill">Temporary • Room Only</span>
+            </div>
+            <span class="badge-pill badge-outline" style="font-size: 0.65rem;">Max 500 chars</span>
+          </div>
+
+          <!-- Chat Error Alert (e.g. rate limit) -->
+          <div class="chat-error-alert" id="chatErrorAlert" hidden>
+            <span>⚠️</span>
+            <span id="chatErrorText">Rate limit reached. Please wait a moment.</span>
+          </div>
+
+          <!-- Messages Container (Rendered with textContent) -->
+          <div class="chat-messages-list" id="chatMessagesList" role="log" aria-live="polite">
+            <div class="chat-empty-hint">
+              <span>👋 No messages yet. Say hello to your classmates in this lounge!</span>
+            </div>
+          </div>
+
+          <!-- Chat Input Bar -->
+          <div class="chat-input-wrapper">
+            <form class="chat-input-form" id="chatInputForm">
+              <input 
+                type="text" 
+                class="chat-text-input" 
+                id="chatTextInput" 
+                placeholder="Type a message to the room..." 
+                maxlength="500" 
+                autocomplete="off"
+              />
+              <button type="submit" class="btn-send-chat" id="btnSendChatMessage">
+                <span>Send</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </form>
+            <div class="chat-input-footer">
+              <span>Press Enter to send. Rate limited to prevent spam.</span>
+              <span class="chat-char-counter" id="chatCharCounter">0/500</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Lounge Actions -->
+        <div class="lobby-action-controls text-center mt-3">
+          <div class="lobby-secondary-buttons">
+            <button type="button" class="btn-lobby-secondary btn-invite-demo" id="btnShareInvite">
+              <span class="btn-icon">📋</span>
+              <span>Copy Invite Link</span>
+            </button>
+
+            <a href="/voice-rooms" class="btn-lobby-secondary btn-leave-lobby" id="btnLeaveLobby">
+              <span class="btn-icon">🚪</span>
+              <span>Leave Room</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Nickname Prompt Modal -->
+<div class="modal-backdrop" id="nicknameModal" role="dialog" aria-modal="true" aria-labelledby="nicknameModalTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Take Your Seat</div>
+    </div>
+    
+    <form id="nicknameForm" class="modal-body text-left">
+      <div class="modal-icon text-center">🎓</div>
+      <h3 class="modal-title text-center" id="nicknameModalTitle">Enter Campus Nickname</h3>
+      <p class="modal-mode-msg text-center">
+        Joining voice lounge <strong><span id="promptRoomCode"><%= roomCode %></span></strong>. Enter a name to take a seat.
+      </p>
+
+      <div class="form-group-wrap">
+        <label for="promptNicknameInput" class="form-label">Your Nickname *</label>
+        <input 
+          type="text" 
+          id="promptNicknameInput" 
+          class="form-input-text" 
+          placeholder="e.g. Alex, Sam, Jordan" 
+          maxlength="20" 
+          required 
+          autocomplete="off"
+        />
+        <small class="form-hint">Displayed to other students at the lounge table.</small>
+      </div>
+
+      <div class="modal-footer modal-footer-actions">
+        <a href="/voice-rooms" class="btn-modal-dismiss">Back to Lounges</a>
+        <button type="submit" class="btn-modal-impostor" id="btnSubmitPromptNickname">
+          <span>Enter Lounge</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Room Error Modal Dialog -->
+<div class="modal-backdrop" id="roomErrorModal" role="dialog" aria-modal="true" aria-labelledby="roomErrorTitle" hidden>
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-tag">Notice</div>
+    </div>
+    
+    <div class="modal-body text-center">
+      <div class="modal-icon">⚠️</div>
+      <h3 class="modal-title" id="roomErrorTitle">Unable to Join Lounge</h3>
+      <p class="modal-mode-msg" id="roomErrorMessage">
+        The lounge could not be joined.
+      </p>
+      <div class="modal-status-box">
+        <span class="status-indicator"></span>
+        <span id="roomErrorDetail">Check code or host a new lounge</span>
+      </div>
+      <p class="modal-explanation">
+        Rooms are stored in server memory and reset when the server restarts.
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <a href="/voice-rooms" class="btn-modal-impostor">
+        <span>Back to Lounges</span>
+        <span class="btn-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Alert -->
+<div class="prototype-toast" id="prototypeToast" role="status" aria-live="polite" hidden>
+  <span class="toast-icon" id="toastIcon">ℹ️</span>
+  <span class="toast-message" id="toastMessage">Demo notification</span>
+</div>
+
+<!-- Include Socket.IO Client Library -->
+<script src="/socket.io/socket.io.js"></script>
+
+<%- include('partials/footer') %>
